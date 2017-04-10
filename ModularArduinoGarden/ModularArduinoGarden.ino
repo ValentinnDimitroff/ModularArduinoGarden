@@ -1,15 +1,15 @@
 /*
-Name:		ModularArduinoGarden.ino
+Name:		SoilControl.ino
 Created:	3/17/2017 4:09:02 PM
-Author:		Kia Kaha
+Author:	Kia Kaha
 */
 
 #include <dht11\dht11.h> //air_humidity&temperature_sensor
 #include <Thermistor\Thermistor.h> //NTC soil temperature sensor
 #include <DS3231\DS3231.h> //RTC
-#include <NewliquidCrystal\LiquidCrystal_I2C.h> //LCD display
+#include <LiquidCrystal_I2C.h> //LCD display
 #include <TimerOne-master\TimerOne.h> //PWM
-#include <Wire\src\Wire.h>
+#include <Wire.h>
 #include <SD-master\SD.h>
 #include <SPI\SPI.h>
 
@@ -43,8 +43,8 @@ const char* logFile = "log.txt";
 void setup() {
 	rtc.begin();
 	initilizeSDcard(SDcard_CS);
-	myFile = SD.open("Sensors.txt", FILE_WRITE);
-	myFile.close();
+	//myFile  = SD.open("Sensors.txt", FILE_WRITE);
+	//myFile.close();
 	lcd.begin(16, 2);
 	lcd.backlight();
 
@@ -165,12 +165,8 @@ delay(2000);
 void initilizeSDcard(int csPin) {
 	pinMode(csPin, OUTPUT);
 
-	if (SD.begin(csPin)) {
-		//Serial.println("SD card is ready to use.");
-	}
-	else {
-		//Serial.println("SD card initialization failed");
-		return;
+	if (!SD.begin(csPin)) {
+		Serial.println("SD card init failed");
 	}
 }
 String readLine(File file) {
