@@ -66,7 +66,7 @@ void setup() {
 		myFile = SD.open(fileWateringSchedule);
 		if (myFile) {
 			//wateringScheduledFor = ConvertStrToTime(readLine(myFile));
-			ConvertStrToTime(readLine(myFile));
+			//ConvertStrToTime(readLine(myFile));
 			myFile.close();
 		}
 	}
@@ -107,6 +107,13 @@ void loop() {
 	//if (IsItTimeToWater()) {
 	WaterPlant(VALVEPIN);
 	SetNextWatering();
+	myFile = SD.open(fileWateringSchedule);
+	if (myFile) {
+		//wateringScheduledFor = ConvertStrToTime(readLine(myFile));
+		ConvertStrToTime(readLine(myFile));
+		myFile.close();
+	}
+
 	//}
 
 	//Write Data on the SD
@@ -201,16 +208,16 @@ boolean IsItTimeToWater(Time givenTime) {
 }
 void WaterPlant(int valvePin) {
 	Timer1.pwm(valvePin, 0);
-	Serial.println("Startin watering");
+	Serial.println("Start watering at " + (String)rtc.getTimeStr());
 	delay(waterAmount);
-	Serial.println("Finished watering at ");
+	//Serial.println("Finish watering at " + (String)rtc.getTimeStr());
 	Timer1.pwm(valvePin, 1024);
 }
 void SetNextWatering() {
 	SD.remove((char*)fileWateringSchedule);
 	myFile = SD.open(fileWateringSchedule, FILE_WRITE);
 	if (myFile) {
-		String nextDate = IncDate(rtc.getTime(), 1);
+		String nextDate = IncDate(rtc.getTime(), 0); //TODO
 		String text = nextDate + "/" + (String)rtc.getTimeStr();
 		myFile.println(text);
 		myFile.close();
@@ -221,33 +228,31 @@ void SetNextWatering() {
 	}
 }
 String IncDate(Time date, int days) {
-	date.date += 1;
+	date.date += days;
 	String newDate = (String)date.date + "." + (String)date.mon + "." + (String)date.year;
 	return newDate;
 }
 Time ConvertStrToTime(String timeStr) {
-	String dateStr = timeStr.substring(0, timeStr.indexOf("/"));
-	int date[2], time[2];
+	int arr[5];
 	Time result;
-	for (int i = 0; i < 2; i++) {
-		int index = dateStr.indexOf(".");
-		date[i] = dateStr.substring(0, index).toInt();
-		dateStr = dateStr.substring(index + 1, dateStr.length() - 1);
-		Serial.println(date[i]);
-	}
-	result.year = dateStr.toInt();
-	result.mon = date[1];
-	result.date = date[0];
-	timeStr = timeStr.substring(timeStr.indexOf("/") + 1, timeStr.length() - 1);
-	for (int i = 0; i < 2; i++) {
-		int index = timeStr.indexOf(":");
-		time[i] = timeStr.substring(0, index).toInt();
-		dateStr = timeStr.substring(index + 1, timeStr.length() - 1);
-		Serial.println(time[i]);
+	int index = 0;
+	
+	for (int i = 0; i < 5; i++) {
+		if (i < 2) index = timeStr.indexOf(".");
+		else if (i == 2) index = timeStr.indexOf("/");
+		else  index = timeStr.indexOf(":");
+
+		arr[i] = timeStr.substring(0, index).toInt();
+		timeStr = timeStr.substring(index + 1, timeStr.length());
+		//Serial.println(arr[i]);
 	}
 	result.sec = timeStr.toInt();
-	result.min = time[1];
-	result.hour = time[0];
+	result.min = arr[4];
+	result.hour = arr[3];
+	result.year = arr[2];
+	result.mon = arr[1];
+	result.date = arr[0];
+	return result;
 }
 void logInsertLn() {
 	//String fileText = "Air Temperature: " + (String)airTemp + ", Air Humidity: " + (String)airHum;
